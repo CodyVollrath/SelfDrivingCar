@@ -36,12 +36,15 @@ class GraphEditor {
             const mouse = new Node(event.offsetX, event.offsetY);
             
             if (this.hovered) {
+                let ifEdgeAded = false;
                 if (this.selected) {
-                    this.graph.tryAddSegment(new Edge(this.selected, this.hovered));
+                    let edge = new Edge(this.selected, this.hovered);
+                    ifEdgeAded = this.graph.tryAddSegment(edge);
+                    if (ifEdgeAded) this.#addUndoEvent(new UndoAction(mouse, [edge], 'add_seg'));
                 }
                 this.selected = this.hovered;
                 this.dragging = true;
-                this.#addUndoEvent(new UndoAction(this.selected, null, 'selected'))
+                if (!ifEdgeAded) this.#addUndoEvent(new UndoAction(this.selected, null, 'selected'))
                 return;
             }
             this.graph.addPoint(mouse);
@@ -50,7 +53,6 @@ class GraphEditor {
             if (this.selected) {
                 let edge = new Edge(this.selected, mouse);
                 let bool = this.graph.tryAddSegment(edge);
-                if (bool) this.#addUndoEvent(new UndoAction(mouse, [edge], 'add_seg'));
             }
             this.selected = mouse;
             this.hovered = mouse;
@@ -98,7 +100,7 @@ class GraphEditor {
                 } else if (lastAction && lastAction.type == 'add_seg') {
                     let edge = lastAction.edges[0];
                     this.graph.removeSegment(edge);
-                    
+                    this.selected = null;
                 }
             }
         }
