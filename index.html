@@ -1,0 +1,129 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>World Editor</title>
+    <link rel="stylesheet" href="styles.css"/>
+</head>
+<body>
+    <h1>World Editor</h1>
+    <canvas id="myCanvas"></canvas>
+    <div id="controls">
+        <button onclick="addRandomPoint()">Add Point</button>
+        <button onclick="addRandomSegment()">Add Segment</button>
+    </div>
+    <script src="js/math/graph.js"></script>
+    <script src="js/primitives/node.js"></script>
+    <script src="js/primitives/edge.js"></script>
+    <script>
+        // Declarations
+        const myCanvas = document.getElementById("myCanvas");
+        myCanvas.width = 800;
+        myCanvas.height = 800;
+        var draggedNode = null;
+
+        const ctx = myCanvas.getContext('2d');
+        const nodeSize = 18;
+
+        const p1 = new Node(200, 200);
+        const p2 = new Node(500, 200);
+        const p3 = new Node(400, 400);
+        const p4 = new Node(100, 300);
+
+        const s1 = new Edge(p1, p2);
+        const s2 = new Edge(p1, p3);
+        const s3 = new Edge(p1, p4);
+
+        const graph = new Graph([p1, p2, p3, p4], [s1, s2, s3]);
+
+        // Event Listeners
+        myCanvas.addEventListener('mousedown', handleMouseDown);
+        myCanvas.addEventListener('mousemove', handleMouseMove);
+        myCanvas.addEventListener('mouseup', handleMouseUp);
+
+        // Functions
+        function addRandomPoint() {
+            const isAdded = graph.tryAddPoint(
+                new Node(
+                    Math.random() * myCanvas.width,
+                    Math.random() * myCanvas.height
+                )
+            );
+
+            if (isAdded){
+                clearCanvas();
+                graph.draw(ctx);
+            }
+
+        }
+
+        function addRandomSegment() {
+            const idx1 = Math.floor(Math.random() * graph.nodes.length);
+            const idx2 = Math.floor(Math.random() * graph.nodes.length);
+            const didAdd = graph.tryAddSegment(new Edge(
+                graph.nodes[idx1],
+                graph.nodes[idx2]
+            ));
+
+            if (didAdd) {
+                clearCanvas();
+                graph.draw(ctx);
+            }
+
+        }
+
+        
+
+        function handleMouseDown(event) {
+            const mousePos = getMousePos(event);
+            
+            graph.nodes.forEach(function(element) {
+                if (detectMouseElementCollision(mousePos, element, nodeSize)) {
+                    draggedNode = element;
+                }
+            });
+        }
+
+        function handleMouseMove(event) {
+            const mousePos = getMousePos(event);
+            if (draggedNode) {
+                draggedNode.move(mousePos.x, mousePos.y);
+                clearCanvas();
+                graph.draw(ctx);
+            }
+        }
+
+        function handleMouseUp() {
+            draggedNode = null;
+        }
+
+        function getMousePos(event) {
+            const rect = myCanvas.getBoundingClientRect();
+            return {
+                x: event.clientX - rect.left,
+                y: event.clientY - rect.top
+            };
+        }
+
+        function clearCanvas() {
+            ctx.clearRect(0, 0, myCanvas.width, myCanvas.height);
+        }
+
+        // Uses distance formula between two points
+        // where point a is (element.x, element.y) and point b is (mousePos.x, mousePos.y)
+        function detectMouseElementCollision(mousePos, element, size) {
+            const r = size / 2;
+            const a = Math.abs(element.x - mousePos.x);
+            const b = Math.abs(element.y - mousePos.y);
+            const v = a * a + b * b;
+            const w = r * r;
+            return v <= w;
+        }
+
+        // Initial Draw
+        
+        graph.draw(ctx);
+    </script>
+</body>
+</html>
