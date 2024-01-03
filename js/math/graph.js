@@ -49,6 +49,10 @@ class Graph {
         this.nodes.splice(this.nodes.indexOf(node), 1);
     }
 
+    getNodeByCoordinates(x, y) {
+        return this.nodes.find(node => node.x == x && node.y == y);
+    }
+
     containsSegment(edge) {
         return this.edges.find((e) => e.equals(edge));
     }

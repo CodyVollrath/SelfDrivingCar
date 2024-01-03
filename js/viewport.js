@@ -3,7 +3,7 @@ class Viewport{
         this.canvas = canvas;
         this.ctx = canvas.getContext('2d');
         this.zoom = 1;
-        this.center = new Node(0,0);
+        this.center = new Node(canvas.width / 2, canvas.height / 2);
         this.offset = scale(this.center, -1);
         
         this.drag = {
@@ -23,27 +23,24 @@ class Viewport{
     }
 
     getMouse(event) {
-        const mouseOgPosition = scale(new Node(event.offsetX, event.offsetY), this.zoom);
-        const mergedPos = this.#adjustMouse(mouseOgPosition);
-        return mergedPos
+        return new Node(
+            (event.offsetX - this.center.x) * this.zoom - this.offset.x,
+            (event.offsetY - this.center.y) * this.zoom - this.offset.y
+        );
     }
 
     getOffset() {
         return add(this.offset, this.drag.offset);
     }
 
-    #adjustMouse(mouseOgPosition) {
-        const absOffset = abs(this.offset);
-        switch(pointComponmentSignCategory(this.offset)) {
-            case 0:
-                return add(mouseOgPosition, absOffset);
-            case 1:
-                return subtract(mouseOgPosition, absOffset);
-            case 2:
-                return new Node(mouseOgPosition.x + absOffset.x, mouseOgPosition.y - absOffset.y);
-            default:
-                return new Node(mouseOgPosition.x - absOffset.x, mouseOgPosition.y + absOffset.y);
-        }
+    reset() {
+        this.ctx.restore();
+        this.ctx.clearRect(0,0, myCanvas.width, myCanvas.height);
+        this.ctx.save();
+        this.ctx.translate(this.center.x, this.center.x);
+        this.ctx.scale(1 / this.zoom, 1 / this.zoom);
+        const offset = this.getOffset();
+        this.ctx.translate(offset.x, offset.y);
     }
 
     #handleMouseWheel(event) {

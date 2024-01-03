@@ -12,15 +12,17 @@ class GraphEditor {
         // Private event listeners
         this.#addEventListeners();
     }
+    
 
     #addEventListeners() {
         this.canvas.addEventListener('mousedown', evt => this.#handleMouseDown(evt));
         this.canvas.addEventListener('mousemove', evt => this.#handleMouseMove(evt));
         this.canvas.addEventListener('mouseup', evt => this.#handleMouseUp(evt));
-        document.addEventListener('keydown', evt => this.#handleUndo(evt));
         this.canvas.addEventListener('contextmenu', evt => {
             evt.preventDefault();
         });
+
+        document.addEventListener('keydown', evt => this.#handleKeyDown(evt));
     }
 
     #handleMouseDown(event) {
@@ -81,29 +83,40 @@ class GraphEditor {
         this.dragging = false;
     }
 
-    #handleUndo(event) {
+    #handleKeyDown(event) {
         if (event.ctrlKey) {
             if (event.key == 'z') {
-                let lastAction = this.actions.pop();
-                if (lastAction && lastAction.type == 'removed') {
-                    let point = lastAction.node;
-                    let edges = lastAction.edges;
-                    this.graph.tryAddPoint(point);
-                    edges.forEach(edge => this.graph.tryAddSegment(edge));
-                } else if (lastAction && lastAction.type == 'add') {
-                    let point = lastAction.node;
-                    if (this.selected && !this.hovered) this.selected = null;
-                    this.graph.removePoint(point);
-                } else if (lastAction && lastAction.type == 'selected') {
-                    let point = lastAction.node;
-                    point.move(lastAction.lastX, lastAction.lastY);
-                    this.selected = null;
-                } else if (lastAction && lastAction.type == 'add_seg') {
-                    let edge = lastAction.edges[0];
-                    this.graph.removeSegment(edge);
-                    this.selected = null;
-                }
+                this.#handleUndo(event);
             }
+        }
+
+        if (event.ctrlKey) {
+            if (event.key == 's') {
+                event.preventDefault();
+                this.save();
+            }
+        }
+    }
+
+    #handleUndo(event) {
+        let lastAction = this.actions.pop();
+        if (lastAction && lastAction.type == 'removed') {
+            let point = lastAction.node;
+            let edges = lastAction.edges;
+            this.graph.tryAddPoint(point);
+            edges.forEach(edge => this.graph.tryAddSegment(edge));
+        } else if (lastAction && lastAction.type == 'add') {
+            let point = lastAction.node;
+            if (this.selected && !this.hovered) this.selected = null;
+            this.graph.removePoint(point);
+        } else if (lastAction && lastAction.type == 'selected') {
+            let point = lastAction.node;
+            point.move(lastAction.lastX, lastAction.lastY);
+            this.selected = null;
+        } else if (lastAction && lastAction.type == 'add_seg') {
+            let edge = lastAction.edges[0];
+            this.graph.removeSegment(edge);
+            this.selected = null;
         }
     }
 
@@ -126,5 +139,31 @@ class GraphEditor {
             new Edge(this.selected, intent).draw(ctx, {dash: [3, 3]});
             this.selected.draw(this.ctx, {outline: true});
         }
+    }
+
+    dispose() {
+        this.graph.dispose();
+        this.actions.length = 0;
+        this.hovered = null;
+        this.selected = null;
+    }
+
+    save() {
+        localStorage.setItem('graph', JSON.stringify(this.graph));
+    }
+
+    load() {
+        let graphData = JSON.parse(localStorage.getItem('graph'));
+        this.graph = new Graph();
+        graphData.nodes.forEach(node => {
+            this.graph.tryAddPoint(new Node(node.x, node.y));
+        });
+        
+        graphData.edges.forEach(edge => {
+            let p1 = this.graph.getNodeByCoordinates(edge.p1.x, edge.p1.y);
+            let p2 = this.graph.getNodeByCoordinates(edge.p2.x, edge.p2.y);
+        
+            this.graph.tryAddSegment(new Edge(p1, p2));
+        });
     }
 }

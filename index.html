@@ -10,6 +10,9 @@
     <h1>World Editor</h1>
     <canvas id="myCanvas"></canvas>
     <div id="controls">
+        <button onclick="dispose()">Delete</button>
+        <button onclick="save()">Save World</button>
+        <button onclick="load()">Load World</button>
     </div>
     <script src="js/primitives/undoAction.js"></script>
     <script src="js/viewport.js"></script>
@@ -34,16 +37,23 @@
         
         animate();
         function animate() {
-            ctx.clearRect(0,0, myCanvas.width, myCanvas.height);
-            ctx.save();
-            ctx.translate(viewport.center.x, viewport.center.x);
-            ctx.scale(1 / viewport.zoom, 1 / viewport.zoom);
-            const offset = viewport.getOffset();
-            ctx.translate(offset.x, offset.y);
+            viewport.reset();
             graphEditor.display();
-            ctx.restore();
             requestAnimationFrame(animate);
         }
+
+        function dispose() {
+            graphEditor.dispose();
+        }
+
+        function save() {
+            graphEditor.save();
+        }
+
+        function load() {
+            graphEditor.load();
+        }
+        
     </script>
 </body>
 </html>
