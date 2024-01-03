@@ -12,6 +12,7 @@
     <div id="controls">
     </div>
     <script src="js/primitives/undoAction.js"></script>
+    <script src="js/viewport.js"></script>
     <script src="js/graphEditor.js"></script>
     <script src="js/math/graph.js"></script>
     <script src="js/math/utils.js"></script>
@@ -27,22 +28,20 @@
         const ctx = myCanvas.getContext('2d');
         const nodeSize = 18;
 
-        const p1 = new Node(200, 200);
-        const p2 = new Node(500, 200);
-        const p3 = new Node(400, 400);
-        const p4 = new Node(100, 300);
-
-        const s1 = new Edge(p1, p2);
-        const s2 = new Edge(p1, p3);
-        const s3 = new Edge(p1, p4);
-
-        const graph = new Graph([p1, p2, p3, p4], [s1, s2, s3]);
-        const graphEditor = new GraphEditor(myCanvas, graph);
+        const graph = new Graph();
+        const viewport = new Viewport(myCanvas);
+        const graphEditor = new GraphEditor(viewport, graph);
         
         animate();
         function animate() {
             ctx.clearRect(0,0, myCanvas.width, myCanvas.height);
+            ctx.save();
+            ctx.translate(viewport.center.x, viewport.center.x);
+            ctx.scale(1 / viewport.zoom, 1 / viewport.zoom);
+            const offset = viewport.getOffset();
+            ctx.translate(offset.x, offset.y);
             graphEditor.display();
+            ctx.restore();
             requestAnimationFrame(animate);
         }
     </script>
